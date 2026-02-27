@@ -1,40 +1,63 @@
 import tkinter as tk
-from tkinter import ttk
-import database
+from tkinter import ttk, messagebox
+import matplotlib.pyplot as plt
+from report_backend import init_db, get_monthly_expenses, get_expenses_by_category
 
-class ReportPage(tk.Frame):
-    def __init__(self, parent):
-        super().__init__(parent, bg="white")
-        self.db = database.db
-        self.setup_ui()
+# make sure database exists
+init_db()
 
-    def setup_ui(self):
-        tk.Label(self, text="Monthly Expenses Report", font=("Arial", 16, "bold"), bg="white").pack(pady=10)
-        
-        # Bar Chart
-        self.c = tk.Canvas(self, height=200, bg="#FCE4EC", highlightthickness=0)
-        self.c.pack(fill=tk.X, padx=40, pady=10)
-        
-        # Table
-        self.tree = ttk.Treeview(self, columns=("Date", "Month", "Category", "Amount"), show="headings")
-        for col in ("Date", "Month", "Category", "Amount"): self.tree.heading(col, text=col)
-        self.tree.pack(fill=tk.BOTH, expand=True, padx=40, pady=20)
+# main window
+root = tk.Tk()
+root.title("Budget Management System - Report")
+root.geometry("1000x600")
+root.resizable(False, False)
 
-    def refresh(self):
-        # Update Table
-        for i in self.tree.get_children(): self.tree.delete(i)
-        self.db.cursor.execute("SELECT date, month, category, amount FROM tx WHERE type='Expense'")
-        for row in self.db.cursor.fetchall():
-            self.tree.insert("", tk.END, values=(row[0], row[1], row[2], f"Rs. {row[3]:,.0f}"))
+# sidebar navigation
+sidebar = tk.Frame(root, bg="#D1A233", width=200, height=600)
+sidebar.pack(side="left", fill="y")
 
-        # Update Bar Chart
-        self.c.delete("all")
-        monthly_data = self.db.get_monthly_sums()
-        max_val = max(monthly_data.values()) if monthly_data else 1
-        months = ["January", "February", "March", "April", "May", "June"]
-        
-        for i, m in enumerate(months):
-            val = monthly_data.get(m, 0)
-            h = (val / max_val) * 150 if val > 0 else 0
-            self.c.create_rectangle(50+(i*100), 180-h, 100+(i*100), 180, fill="#5C6BC0")
-            self.c.create_text(75+(i*100), 190, text=m[:3])
+menu_items = ["Home", "Report", "Add Income", "Add Expenses", "History", "Setting"]
+for item in menu_items:
+    tk.Button(sidebar, text=item, bg="#CAAA1E", fg="white",
+              relief="flat", width=20, height=2).pack(pady=5)
+
+# main content area
+main = tk.Frame(root, bg="white", width=800, height=600)
+main.pack(side="right", fill="both", expand=True)
+
+# header
+tk.Label(main, text="Monthly Expenses Report",
+         font=("Arial", 20, "bold"), bg="white", fg="#1b5e20").pack(pady=10)
+
+# graph button
+def show_graph():
+    data = get_monthly_expenses()
+    if not data:
+        messagebox.showinfo("Info", "No expense data yet")
+        return
+    months = [m for m, _ in data]
+    amounts = [a for _, a in data]
+    plt.bar(months, amounts, color="#DBA134")
+    plt.title("Monthly Expenses Report")
+    plt.xlabel("Month")
+    plt.ylabel("Amount")
+    plt.show()
+
+tk.Button(main, text="Show Graph", command=show_graph,
+          bg="green", fg="white", width=20).pack(pady=10)
+
+# expense table
+tk.Label(main, text="Expense by Category",
+         font=("Arial", 16, "bold"), bg="white").pack(pady=10)
+
+tree = ttk.Treeview(main, columns=("Date", "Month", "Category", "Amount"), show="headings")
+tree.pack(fill="both", expand=True, padx=20, pady=10)
+
+for col in ("Date", "Month", "Category", "Amount"):
+    tree.heading(col, text=col)
+
+rows = get_expenses_by_category()
+for r in rows:
+    tree.insert("", tk.END, values=r)
+
+root.mainloop()
