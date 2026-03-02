@@ -64,6 +64,17 @@ class BudgetApp:
 
         self.show_frame("ReportScreen")
 
+    def logout(self):
+        """Close this app window and open the login frontend."""
+        # destroy the current root before spawning a new Tk instance
+        self.root.destroy()
+        try:
+            # import inside function so it's executed on demand
+            import signup.login_frontend  # noqa: F401
+        except Exception:
+            # if something goes wrong just exit gracefully
+            pass
+
     def create_menu_buttons(self):
         menu_items = [
             ("🏠 Home", "HomeScreen"),
@@ -71,15 +82,21 @@ class BudgetApp:
             ("➕ Add income", "HomeScreen"),
             ("➕ Add Expenses", "HomeScreen"),
             ("📅 History", "HomeScreen"),
-            ("⚙️ Setting", "SettingsScreen")
+            ("🔒 logout", "logoutScreen")
         ]
 
         self.nav_buttons = {}
         for text, target in menu_items:
+            # logout needs a special handler instead of raising a frame
+            if target == "logoutScreen":
+                cmd = self.logout
+            else:
+                cmd = lambda t=target: self.show_frame(t)
+
             btn = tk.Button(self.sidebar, text=f"  {text}", font=("Arial", 12, "bold"),
                             anchor="w", bg=self.colors["sidebar"], relief="flat", bd=0, 
                             padx=20, pady=15, cursor="hand2",
-                            command=lambda t=target: self.show_frame(t))
+                            command=cmd)
             btn.pack(fill="x", pady=1)
             self.nav_buttons[target] = btn
 

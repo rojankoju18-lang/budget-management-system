@@ -1,71 +1,151 @@
 import tkinter as tk
 from tkinter import messagebox
-from settings_backend import init_db, get_profile, update_profile
+import sqlite3
+import os
 
-# setup database
-init_db()
 
-# assume demo user_id = 1
-USER_ID = 1
+class SettingsPage(tk.Frame):
+    def __init__(self, parent, controller=None):
+        super().__init__(parent, bg="#F5F0F6")
+        self.db_path = "signup/users.db"
+        self.controller = controller
+        self.authenticated_email = controller.authenticated_user_email if controller else None
+        self.user_data = None
+        self.load_user_data()
+        self.setup_ui()
 
-root = tk.Tk()
-root.title("Budget Management System - Settings")
-root.geometry("1000x600")
-root.resizable(False, False)
+    def load_user_data(self):
+        """Load user data from signup/users.db"""
+        if not self.authenticated_email:
+            messagebox.showerror("Error", "User not authenticated")
+            return
+        
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT id, fullname, email, phone FROM users WHERE email = ?",
+                (self.authenticated_email,)
+            )
+            self.user_data = cursor.fetchone()
+            conn.close()
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to load user data: {str(e)}")
 
-# sidebar navigation
-sidebar = tk.Frame(root, bg="#E8A936", width=200, height=600)
-sidebar.pack(side="left", fill="y")
+    def setup_ui(self):
+        # Header
+        header = tk.Frame(self, bg="#F5F0F6")
+        header.pack(fill=tk.X, padx=30, pady=20)
+        tk.Label(header, text="✏️ Update Profile", font=("Arial", 24, "bold"), bg="#F5F0F6", fg="#4A235A").pack(anchor="w")
+        tk.Label(header, text="Update your account information", font=("Arial", 11), bg="#F5F0F6", fg="#666").pack(anchor="w")
 
-menu_items = ["Home", "Report", "Add Income", "Add Expenses", "History", "Setting"]
-for item in menu_items:
-    tk.Button(sidebar, text=item, bg="#E2A534", fg="white",
-              relief="flat", width=20, height=2).pack(pady=5)
+        # Main Form Card
+        card = tk.Frame(self, bg="white", relief=tk.FLAT, bd=0)
+        card.pack(fill=tk.BOTH, expand=False, padx=40, pady=20)
+        
+        # Add border effect
+        border = tk.Frame(card, bg="#8E44AD", height=2)
+        border.pack(fill=tk.X)
 
-# main content area
-main = tk.Frame(root, bg="white", width=800, height=600)
-main.pack(side="right", fill="both", expand=True)
+        form = tk.Frame(card, bg="white")
+        form.pack(fill=tk.BOTH, expand=True, padx=30, pady=30)
 
-tk.Label(main, text="Update Profile",
-         font=("Arial", 20, "bold"), bg="white", fg="#1b5e20").pack(pady=20)
+        # Full Name Field
+        tk.Label(form, text="Full Name", font=("Arial", 12, "bold"), bg="white", fg="#4A235A").pack(anchor="w", pady=(0, 5))
+        self.entry_fullname = tk.Entry(form, font=("Arial", 12), width=35, relief=tk.FLAT, bg="#F8F8F8", bd=0)
+        if self.user_data:
+            self.entry_fullname.insert(0, self.user_data[1] or "")
+        self.entry_fullname.pack(fill=tk.X, pady=(0, 15), ipady=8)
 
-def create_entry(label, default=""):
-    frame = tk.Frame(main, bg="white")
-    frame.pack(pady=5, padx=20, anchor="w")
-    tk.Label(frame, text=label, font=("Arial", 12), bg="white").pack(side="left", padx=10)
-    entry = tk.Entry(frame, width=40)
-    entry.insert(0, default)
-    entry.pack(side="left")
-    return entry
+        # Email Field
+        tk.Label(form, text="Email", font=("Arial", 12, "bold"), bg="white", fg="#4A235A").pack(anchor="w", pady=(0, 5))
+        self.entry_email = tk.Entry(form, font=("Arial", 12), width=35, relief=tk.FLAT, bg="#F8F8F8", bd=0)
+        if self.user_data:
+            self.entry_email.insert(0, self.user_data[2] or "")
+        self.entry_email.pack(fill=tk.X, pady=(0, 15), ipady=8)
 
-# load existing profile
-profile = get_profile(USER_ID)
-if profile:
-    entry_name = create_entry("User Name:", profile[0])
-    entry_email = create_entry("Email:", profile[1])
-    entry_currency = create_entry("Currency:", profile[2])
-    entry_number = create_entry("Number:", profile[3])
-else:
-    entry_name = create_entry("User Name:")
-    entry_email = create_entry("Email:")
-    entry_currency = create_entry("Currency:")
-    entry_number = create_entry("Number:")
+        # Phone Field
+        tk.Label(form, text="Phone", font=("Arial", 12, "bold"), bg="white", fg="#4A235A").pack(anchor="w", pady=(0, 5))
+        self.entry_phone = tk.Entry(form, font=("Arial", 12), width=35, relief=tk.FLAT, bg="#F8F8F8", bd=0)
+        if self.user_data:
+            self.entry_phone.insert(0, self.user_data[3] or "")
+        self.entry_phone.pack(fill=tk.X, pady=(0, 20), ipady=8)
 
-# save profile
-def save_profile():
-    result = update_profile(USER_ID,
-                            entry_name.get(),
-                            entry_email.get(),
-                            entry_currency.get(),
-                            entry_number.get())
-    if result == "SUCCESS":
-        messagebox.showinfo("Success", "Profile updated successfully")
-    else:
-        messagebox.showerror("Error", result)
+        # Button Frame
+        btn_frame = tk.Frame(card, bg="white")
+        btn_frame.pack(fill=tk.X, padx=30, pady=(0, 30))
 
-tk.Button(main, text="Update Profile", command=save_profile,
-          bg="green", fg="white", width=20).pack(pady=20)
+        tk.Button(btn_frame, text="💾 Save Changes", command=self.save_changes, 
+                 bg="#8E44AD", fg="white", font=("Arial", 12, "bold"), 
+                 relief=tk.FLAT, bd=0, cursor="hand2", padx=30, pady=10).pack(side=tk.LEFT, padx=5)
 
-tk.Button(main, text="Logout", bg="red", fg="white", width=20).pack(side="bottom", pady=20)
+        tk.Button(btn_frame, text="🔒 Logout", command=self.logout_user, 
+                 bg="#E74C3C", fg="white", font=("Arial", 12, "bold"), 
+                 relief=tk.FLAT, bd=0, cursor="hand2", padx=30, pady=10).pack(side=tk.LEFT, padx=5)
 
-root.mainloop()
+    def save_changes(self):
+        """Save updated user information"""
+        fullname = self.entry_fullname.get().strip()
+        email = self.entry_email.get().strip()
+        phone = self.entry_phone.get().strip()
+
+        # Validation
+        if not fullname:
+            messagebox.showerror("Error", "Full name is required")
+            return
+
+        if not email:
+            messagebox.showerror("Error", "Email is required")
+            return
+
+        if not phone:
+            messagebox.showerror("Error", "Phone is required")
+            return
+
+        # Check if email is unique (if changed)
+        if email != self.authenticated_email:
+            try:
+                conn = sqlite3.connect(self.db_path)
+                cursor = conn.cursor()
+                cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
+                if cursor.fetchone():
+                    conn.close()
+                    messagebox.showerror("Error", "Email already exists")
+                    return
+                conn.close()
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to check email: {str(e)}")
+                return
+
+        # Update user data in database
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE users SET fullname = ?, email = ?, phone = ? WHERE email = ?",
+                (fullname, email, phone, self.authenticated_email)
+            )
+            conn.commit()
+            conn.close()
+            
+            # Update authenticated email if it changed
+            if email != self.authenticated_email:
+                self.controller.authenticated_user_email = email
+                self.authenticated_email = email
+
+            messagebox.showinfo("Success", "✓ Profile updated successfully")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to update profile: {str(e)}")
+
+    def logout_user(self):
+        """Logout and return to authentication"""
+        if self.controller:
+            self.controller.logout()
+
+    def refresh(self):
+        """Refresh the page when shown"""
+        # Reload user data and rebuild UI
+        for w in self.winfo_children():
+            w.destroy()
+        self.load_user_data()
+        self.setup_ui()

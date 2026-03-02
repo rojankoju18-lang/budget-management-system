@@ -10,9 +10,7 @@ import os
 # --- Authentication Functions ---
 def init_db():
     """Initialize the users database"""
-    # Ensure signup directory exists
-    os.makedirs("signup", exist_ok=True)
-    conn = sqlite3.connect("signup/users.db")
+    conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS users (
@@ -33,7 +31,7 @@ def login_user(email, password):
         return "All fields are required"
 
     try:
-        conn = sqlite3.connect("signup/users.db")
+        conn = sqlite3.connect("users.db")
         cursor = conn.cursor()
         cursor.execute(
             "SELECT * FROM users WHERE email = ? AND password = ?",
@@ -62,7 +60,7 @@ def signup_user(fullname, phone, email, password, confirm):
         return "Invalid email format"
 
     try:
-        conn = sqlite3.connect("signup/users.db")
+        conn = sqlite3.connect("users.db")
         cursor = conn.cursor()
         cursor.execute(
             "INSERT INTO users (fullname, phone, email, password) VALUES (?, ?, ?, ?)",
@@ -81,12 +79,10 @@ def signup_user(fullname, phone, email, password, confirm):
 class AuthWindow(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Budget Management System")
-        self.geometry("900x500")
+        self.title("Budget Management System - Authentication")
+        self.geometry("500x450")
         self.resizable(False, False)
         self.authenticated_user = None
-        self.login_image = None
-        self.signup_image = None
         
         # Initialize database
         init_db()
@@ -94,40 +90,23 @@ class AuthWindow(tk.Tk):
         self.show_login()
 
     def show_login(self):
-        """Display login form with image"""
+        """Display login form"""
         # Clear window
         for widget in self.winfo_children():
             widget.destroy()
 
-        # Left Frame - Image
-        left_frame = tk.Frame(self, width=550, height=500, bg="white")
-        left_frame.pack(side="left", fill="both")
+        main_frame = tk.Frame(self, bg="#E6E6E6")
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
 
-        # Load image
-        img_path = os.path.join(os.path.dirname(__file__), "signup", "login.png")
-        try:
-            from PIL import Image, ImageTk
-            img = Image.open(img_path)
-            img = img.resize((450, 350), Image.LANCZOS)
-            self.login_image = ImageTk.PhotoImage(img)
-            img_label = tk.Label(left_frame, image=self.login_image, bg="white")
-            img_label.pack(expand=True)
-        except Exception:
-            tk.Label(left_frame, text="No image available", bg="white", fg="#666").pack(expand=True)
+        tk.Label(main_frame, text="Login", font=("Arial", 22, "bold"), bg="#E6E6E6").pack(pady=20)
 
-        # Right Frame - Form
-        right_frame = tk.Frame(self, bg="#E6E6E6", width=350)
-        right_frame.pack(side="right", fill="y")
+        tk.Label(main_frame, text="Email", bg="#E6E6E6", font=("Arial", 10)).pack(anchor="w", pady=(10, 0))
+        email_entry = tk.Entry(main_frame, font=("Arial", 11), width=35)
+        email_entry.pack(pady=5)
 
-        tk.Label(right_frame, text="login", font=("Arial", 22, "bold"), bg="#E6E6E6").pack(pady=20)
-
-        tk.Label(right_frame, text="Email", bg="#E6E6E6").pack(anchor="w", padx=30)
-        email_entry = tk.Entry(right_frame, font=("Arial", 12), width=30)
-        email_entry.pack(padx=30, pady=5)
-
-        tk.Label(right_frame, text="Password", bg="#E6E6E6").pack(anchor="w", padx=30)
-        password_entry = tk.Entry(right_frame, show="*", font=("Arial", 12), width=30)
-        password_entry.pack(padx=30, pady=5)
+        tk.Label(main_frame, text="Password", bg="#E6E6E6", font=("Arial", 10)).pack(anchor="w", pady=(10, 0))
+        password_entry = tk.Entry(main_frame, show="*", font=("Arial", 11), width=35)
+        password_entry.pack(pady=5)
 
         def handle_login():
             result = login_user(email_entry.get(), password_entry.get())
@@ -138,71 +117,56 @@ class AuthWindow(tk.Tk):
                 messagebox.showerror("Login Failed", result)
 
         tk.Button(
-            right_frame,
-            text="login",
+            main_frame,
+            text="Login",
             command=handle_login,
             bg="#6C7CFF",
             fg="white",
-            width=20
+            font=("Arial", 11),
+            width=25
         ).pack(pady=20)
 
-        tk.Label(right_frame, text="Don't have an account?", bg="#E6E6E6").pack(pady=10)
+        tk.Label(main_frame, text="Don't have an account?", bg="#E6E6E6", font=("Arial", 10)).pack(pady=10)
         tk.Button(
-            right_frame,
+            main_frame,
             text="Signup",
             command=self.show_signup,
             bg="#6C7CFF",
             fg="white",
-            width=20
-        ).pack(pady=10)
+            font=("Arial", 11),
+            width=25
+        ).pack(pady=5)
 
     def show_signup(self):
-        """Display signup form with image"""
+        """Display signup form"""
         # Clear window
         for widget in self.winfo_children():
             widget.destroy()
 
-        # Left Frame - Image
-        left_frame = tk.Frame(self, width=550, height=500, bg="white")
-        left_frame.pack(side="left", fill="both")
+        main_frame = tk.Frame(self, bg="#E6E6E6")
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
 
-        # Load image
-        img_path = os.path.join(os.path.dirname(__file__), "signup", "Image.png")
-        try:
-            from PIL import Image, ImageTk
-            img = Image.open(img_path)
-            img = img.resize((450, 350), Image.LANCZOS)
-            self.signup_image = ImageTk.PhotoImage(img)
-            img_label = tk.Label(left_frame, image=self.signup_image, bg="white")
-            img_label.pack(expand=True)
-        except Exception:
-            tk.Label(left_frame, text="No image available", bg="white", fg="#666").pack(expand=True)
+        tk.Label(main_frame, text="Signup", font=("Arial", 22, "bold"), bg="#E6E6E6").pack(pady=15)
 
-        # Right Frame - Form
-        right_frame = tk.Frame(self, bg="#E6E6E6", width=350)
-        right_frame.pack(side="right", fill="y")
+        tk.Label(main_frame, text="Full Name", bg="#E6E6E6", font=("Arial", 10)).pack(anchor="w", pady=(5, 0))
+        name_entry = tk.Entry(main_frame, font=("Arial", 10), width=35)
+        name_entry.pack(pady=3)
 
-        tk.Label(right_frame, text="Signup", font=("Arial", 22, "bold"), bg="#E6E6E6").pack(pady=20)
+        tk.Label(main_frame, text="Phone", bg="#E6E6E6", font=("Arial", 10)).pack(anchor="w", pady=(5, 0))
+        phone_entry = tk.Entry(main_frame, font=("Arial", 10), width=35)
+        phone_entry.pack(pady=3)
 
-        tk.Label(right_frame, text="fullname", bg="#E6E6E6").pack(anchor="w", padx=30)
-        name_entry = tk.Entry(right_frame, font=("Arial", 12), width=30)
-        name_entry.pack(padx=30, pady=5)
+        tk.Label(main_frame, text="Email", bg="#E6E6E6", font=("Arial", 10)).pack(anchor="w", pady=(5, 0))
+        email_entry = tk.Entry(main_frame, font=("Arial", 10), width=35)
+        email_entry.pack(pady=3)
 
-        tk.Label(right_frame, text="Phone", bg="#E6E6E6").pack(anchor="w", padx=30)
-        phone_entry = tk.Entry(right_frame, font=("Arial", 12), width=30)
-        phone_entry.pack(padx=30, pady=5)
+        tk.Label(main_frame, text="Password", bg="#E6E6E6", font=("Arial", 10)).pack(anchor="w", pady=(5, 0))
+        password_entry = tk.Entry(main_frame, show="*", font=("Arial", 10), width=35)
+        password_entry.pack(pady=3)
 
-        tk.Label(right_frame, text="Email", bg="#E6E6E6").pack(anchor="w", padx=30)
-        email_entry = tk.Entry(right_frame, font=("Arial", 12), width=30)
-        email_entry.pack(padx=30, pady=5)
-
-        tk.Label(right_frame, text="Password", bg="#E6E6E6").pack(anchor="w", padx=30)
-        password_entry = tk.Entry(right_frame, show="*", font=("Arial", 12), width=30)
-        password_entry.pack(padx=30, pady=5)
-
-        tk.Label(right_frame, text="Confirm Password", bg="#E6E6E6").pack(anchor="w", padx=30)
-        confirm_entry = tk.Entry(right_frame, show="*", font=("Arial", 12), width=30)
-        confirm_entry.pack(padx=30, pady=5)
+        tk.Label(main_frame, text="Confirm Password", bg="#E6E6E6", font=("Arial", 10)).pack(anchor="w", pady=(5, 0))
+        confirm_entry = tk.Entry(main_frame, show="*", font=("Arial", 10), width=35)
+        confirm_entry.pack(pady=3)
 
         def handle_signup():
             result = signup_user(
@@ -213,27 +177,38 @@ class AuthWindow(tk.Tk):
                 confirm_entry.get()
             )
             if result == "SUCCESS":
-                messagebox.showinfo("Success", "Signup completed")
-                self.show_login()
+                messagebox.showinfo("Success", "Account created successfully! Logging you in now.")
+                self.authenticated_user = email_entry.get()
+                self.destroy()
             else:
-                messagebox.showerror("Error", result)
+                messagebox.showerror("Signup Failed", result)
 
         tk.Button(
-            right_frame,
+            main_frame,
             text="Signup",
             command=handle_signup,
             bg="#6C7CFF",
             fg="white",
-            width=20
-        ).pack(pady=20)
+            font=("Arial", 11),
+            width=25
+        ).pack(pady=15)
+
+        tk.Button(
+            main_frame,
+            text="Back to Login",
+            command=self.show_login,
+            bg="#999999",
+            fg="white",
+            font=("Arial", 11),
+            width=25
+        ).pack(pady=5)
 
 
 class BudgetApp(tk.Tk):
-    def __init__(self, authenticated_user_email=None):
+    def __init__(self):
         super().__init__()
         self.title("Budget Management System")
         self.geometry("1100x750")
-        self.authenticated_user_email = authenticated_user_email
 
         # colour palette copied from riwaj.py for consistency
         self.colors = {
@@ -257,7 +232,7 @@ class BudgetApp(tk.Tk):
             "Report": report.ReportPage,
             "Add income": income.IncomePage,
             "Add Expenses": expenses.ExpensesPage,
-            "Update": settings.SettingsPage,
+            "Setting": settings.SettingsPage,
             "History": history.HistoryPage
         }
 
@@ -290,7 +265,7 @@ class BudgetApp(tk.Tk):
             ("➕ Add income", "Add income"),
             ("➕ Add Expenses", "Add Expenses"),
             ("📅 History", "History"),
-            ("✏️ Update", "Update"),
+            ("⚙️ Setting", "Setting"),
             ("🔒 Logout", "Logout"),
         ]
 
@@ -351,10 +326,11 @@ class BudgetApp(tk.Tk):
             auth_window = AuthWindow()
             auth_window.mainloop()
             if auth_window.authenticated_user:
-                app = BudgetApp(authenticated_user_email=auth_window.authenticated_user)
+                app = BudgetApp()
                 app.mainloop()
         except Exception:
             pass
+
 
 if __name__ == "__main__":
     # First show authentication window
@@ -363,5 +339,5 @@ if __name__ == "__main__":
     
     # Only proceed if user authenticated successfully
     if auth_window.authenticated_user:
-        app = BudgetApp(authenticated_user_email=auth_window.authenticated_user)
+        app = BudgetApp()
         app.mainloop()

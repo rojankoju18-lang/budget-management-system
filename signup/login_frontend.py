@@ -6,6 +6,20 @@ from login_backend import login_user
 import signup_frontend# Import the signup frontend to navigate to it
 
 
+def show_login(existing_root=None):
+    """Display the login window, destroying existing root if provided."""
+    if existing_root is not None:
+        try:
+            existing_root.destroy()
+        except Exception:
+            pass
+
+    # the rest of the UI will be built in the remainder of this file, so the
+    # caller doesn't need to construct anything else.  A later patch will
+    # reorganize the code to live inside this function.
+
+
+
 root = tk.Tk()
 root.title("login")
 root.geometry("900x500")

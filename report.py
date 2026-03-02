@@ -1,63 +1,112 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
-import matplotlib.pyplot as plt
-from report_backend import init_db, get_monthly_expenses, get_expenses_by_category
+import math
+import database
 
-# make sure database exists
-init_db()
+class ReportPage(tk.Frame):
+    def __init__(self, parent, controller=None):
+        super().__init__(parent, bg="#F5F0F6", padx=30, pady=20)
+        self.db = database.db
+        self.controller = controller
+        
+        # Color palette matching main.py
+        self.colors = {
+            "green_card": "#D5F5E3",
+            "pink_card": "#FADBD8",
+            "rent": "#5D6D7E",
+            "food": "#F4D03F",
+            "savings": "#C0392B",
+            "groceries": "#8E44AD",
+            "study": "#EB70AA",
+            "bike": "#2ECC71",
+        }
+        
+        # Stats cards area
+        self.stats_frame = tk.Frame(self, bg="#F5F0F6")
+        self.stats_frame.pack(fill="x", padx=0, pady=0)
+        
+        # Bottom area: pie chart + legend
+        self.bottom_frame = tk.Frame(self, bg="#F5F0F6", pady=20)
+        self.bottom_frame.pack(fill="both", expand=True)
+        
+        self.canvas = tk.Canvas(self.bottom_frame, width=400, height=400, 
+                                bg="#F5F0F6", highlightthickness=0)
+        self.canvas.pack(side="left")
+        
+        self.legend_frame = tk.Frame(self.bottom_frame, bg="#F5F0F6")
+        self.legend_frame.pack(side="left", padx=50)
 
-# main window
-root = tk.Tk()
-root.title("Budget Management System - Report")
-root.geometry("1000x600")
-root.resizable(False, False)
+    def refresh(self):
+        # Clear and rebuild cards
+        for widget in self.stats_frame.winfo_children():
+            widget.destroy()
+        
+        # Get data from database
+        income = self.db.get_config('balance')
+        remaining = self.db.get_config('remaining_balance')
+        savings = self.db.get_config('savings')
+        day = int(self.db.get_config('day'))
+        categories = self.db.get_category_sums()
+        spent = sum(categories.values())
+        
+        # Create stat cards
+        self.create_card("Balance", f"Rs. {income:,.0f}", self.colors["green_card"], 0, 0)
+        self.create_card("Remaining Balance", f"Rs. {remaining:,.0f}", self.colors["green_card"], 0, 1)
+        self.create_card("Savings", f"Rs. {savings:,.0f}", self.colors["pink_card"], 1, 0)
+        self.create_card("Day", day, self.colors["pink_card"], 1, 1)
 
-# sidebar navigation
-sidebar = tk.Frame(root, bg="#D1A233", width=200, height=600)
-sidebar.pack(side="left", fill="y")
+        # Draw pie chart
+        self.canvas.delete("all")
+        
+        if spent == 0:
+            # Placeholder if no expenses exist
+            self.canvas.create_oval(60, 60, 340, 340, fill="#E0E0E0", outline="white")
+            self.canvas.create_text(200, 200, text="No Data", font=("Arial", 12, "italic"))
+        else:
+            start = 0
+            cx, cy, r = 200, 200, 140
+            for cat, val in categories.items():
+                if val <= 0:
+                    continue
+                
+                percentage = (val / spent) * 100
+                extent = (val / spent) * 360
+                color = self.colors.get(cat.lower(), "#DDD")
+                
+                # Draw Slice
+                self.canvas.create_arc(cx-r, cy-r, cx+r, cy+r, start=start, extent=extent,
+                                       fill=color, outline="white")
+                
+                # Calculate text position for percentage labels
+                mid_angle = math.radians(start + (extent / 2))
+                tx = cx + (r * 0.7) * math.cos(mid_angle)
+                ty = cy - (r * 0.7) * math.sin(mid_angle)
+                
+                if percentage > 4:  # Only show text if slice is big enough
+                    self.canvas.create_text(tx, ty, text=f"{percentage:.1f}%",
+                                           fill="white" if color != "#F4D03F" else "black",
+                                           font=("Arial", 10, "bold"))
+                
+                start += extent
+            
+            # Inner white circle for "Donut" effect
+            self.canvas.create_oval(cx-40, cy-40, cx+40, cy+40, fill="white", outline="white")
 
-menu_items = ["Home", "Report", "Add Income", "Add Expenses", "History", "Setting"]
-for item in menu_items:
-    tk.Button(sidebar, text=item, bg="#CAAA1E", fg="white",
-              relief="flat", width=20, height=2).pack(pady=5)
+        # Rebuild legend - show ALL categories like in riwaj.py
+        for widget in self.legend_frame.winfo_children():
+            widget.destroy()
+        
+        # All possible categories in fixed order
+        all_categories = ["Rent", "Food", "Savings", "Groceries", "Study", "Bike"]
+        
+        for cat in all_categories:
+            color = self.colors.get(cat.lower(), "#DDD")
+            tk.Label(self.legend_frame, text=cat, font=("Arial", 11, "bold"),
+                     bg=color, fg="white" if color != "#F4D03F" else "black",
+                     width=25, pady=8).pack(pady=4)
 
-# main content area
-main = tk.Frame(root, bg="white", width=800, height=600)
-main.pack(side="right", fill="both", expand=True)
-
-# header
-tk.Label(main, text="Monthly Expenses Report",
-         font=("Arial", 20, "bold"), bg="white", fg="#1b5e20").pack(pady=10)
-
-# graph button
-def show_graph():
-    data = get_monthly_expenses()
-    if not data:
-        messagebox.showinfo("Info", "No expense data yet")
-        return
-    months = [m for m, _ in data]
-    amounts = [a for _, a in data]
-    plt.bar(months, amounts, color="#DBA134")
-    plt.title("Monthly Expenses Report")
-    plt.xlabel("Month")
-    plt.ylabel("Amount")
-    plt.show()
-
-tk.Button(main, text="Show Graph", command=show_graph,
-          bg="green", fg="white", width=20).pack(pady=10)
-
-# expense table
-tk.Label(main, text="Expense by Category",
-         font=("Arial", 16, "bold"), bg="white").pack(pady=10)
-
-tree = ttk.Treeview(main, columns=("Date", "Month", "Category", "Amount"), show="headings")
-tree.pack(fill="both", expand=True, padx=20, pady=10)
-
-for col in ("Date", "Month", "Category", "Amount"):
-    tree.heading(col, text=col)
-
-rows = get_expenses_by_category()
-for r in rows:
-    tree.insert("", tk.END, values=r)
-
-root.mainloop()
+    def create_card(self, title, val, color, r, c):
+        card = tk.Frame(self.stats_frame, bg=color, padx=20, pady=20)
+        card.grid(row=r, column=c, padx=10, pady=10, sticky="nsew")
+        self.stats_frame.grid_columnconfigure(c, weight=1)
+        tk.Label(card, text=title, bg=color, font=("Arial", 11)).pack(anchor="w")
+        tk.Label(card, text=val, bg=color, font=("Arial", 18, "bold")).pack(anchor="w")
