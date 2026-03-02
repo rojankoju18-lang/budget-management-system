@@ -10,6 +10,7 @@ class IncomePage(tk.Frame):
         super().__init__(parent, bg="#F5F0F6")
         self.db = database.db
         self.controller = controller
+        self.authenticated_user_email = controller.authenticated_user_email if controller else None
         self.setup_ui()
 
     def setup_ui(self):
@@ -75,7 +76,7 @@ class IncomePage(tk.Frame):
             messagebox.showerror("Error", "Date format must be YYYY/MM/DD")
             return
 
-        self.db.add_transaction("Income", amt_val, src, date)
+        self.db.add_transaction(self.authenticated_user_email, "Income", amt_val, src, date)
         messagebox.showinfo("Success", "✓ Income added successfully")
 
         # reset fields

@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import messagebox, font
 import home, income, expenses, report, settings
 import history
+import database
 import sqlite3
 import re
 import os
@@ -351,6 +352,8 @@ class BudgetApp(tk.Tk):
             auth_window = AuthWindow()
             auth_window.mainloop()
             if auth_window.authenticated_user:
+                # Initialize user config in database
+                database.db.init_user_config(auth_window.authenticated_user)
                 app = BudgetApp(authenticated_user_email=auth_window.authenticated_user)
                 app.mainloop()
         except Exception:
@@ -363,5 +366,7 @@ if __name__ == "__main__":
     
     # Only proceed if user authenticated successfully
     if auth_window.authenticated_user:
+        # Initialize user config in database
+        database.db.init_user_config(auth_window.authenticated_user)
         app = BudgetApp(authenticated_user_email=auth_window.authenticated_user)
         app.mainloop()
