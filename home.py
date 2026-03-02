@@ -6,20 +6,22 @@ class HomePage(tk.Frame):
     def __init__(self, parent, controller=None):
         super().__init__(parent, bg="#F5F0F6")
         self.controller = controller
-        self.authenticated_user_email = controller.authenticated_user_email if controller else None
+        self.authenticated_user_id = controller.authenticated_user_id if controller else None
         self.setup_ui()
     
     def setup_ui(self):
-        # Fetch user's full name from signup database
+        # Fetch user's full name and email from signup database
         user_name = "User"
+        user_email = "user@example.com"
         try:
-            if self.authenticated_user_email:
+            if self.authenticated_user_id:
                 conn = sqlite3.connect("signup/users.db")
                 cursor = conn.cursor()
-                cursor.execute("SELECT fullname FROM users WHERE email = ?", (self.authenticated_user_email,))
+                cursor.execute("SELECT fullname, email FROM users WHERE id = ?", (self.authenticated_user_id,))
                 result = cursor.fetchone()
                 if result:
                     user_name = result[0]
+                    user_email = result[1]
                 conn.close()
         except Exception:
             pass
@@ -31,7 +33,7 @@ class HomePage(tk.Frame):
         tk.Label(welcome_frame, text=f"Welcome, {user_name}! 👋", font=("Arial", 32, "bold"), 
                  bg="#F5F0F6", fg="#4A235A").pack(pady=20)
         
-        tk.Label(welcome_frame, text=f"Email: {self.authenticated_user_email}", font=("Arial", 12), 
+        tk.Label(welcome_frame, text=f"Email: {user_email}", font=("Arial", 12), 
                  bg="#F5F0F6", fg="#666").pack(pady=5)
         
         tk.Label(welcome_frame, text="Your personal budget dashboard is ready", font=("Arial", 14), 

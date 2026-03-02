@@ -10,7 +10,7 @@ class ExpensesPage(tk.Frame):
         super().__init__(parent, bg="#F5F0F6")
         self.db = database.db
         self.controller = controller
-        self.authenticated_user_email = controller.authenticated_user_email if controller else None
+        self.authenticated_user_id = controller.authenticated_user_id if controller else None
         self.setup_ui()
 
     def setup_ui(self):
@@ -99,7 +99,7 @@ class ExpensesPage(tk.Frame):
             messagebox.showerror("Error", "Date format must be YYYY/MM/DD")
             return
 
-        self.db.add_transaction(self.authenticated_user_email, "Expense", amt_val, cat, date)
+        self.db.add_transaction(self.authenticated_user_id, "Expense", amt_val, cat, date)
         messagebox.showinfo("Success", "✓ Expense added successfully")
 
         # reset fields

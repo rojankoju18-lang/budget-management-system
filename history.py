@@ -9,7 +9,7 @@ class HistoryPage(tk.Frame):
         super().__init__(parent, bg="#F5F0F6")
         self.db = database.db
         self.controller = controller
-        self.authenticated_user_email = controller.authenticated_user_email if controller else None
+        self.authenticated_user_id = controller.authenticated_user_id if controller else None
         self.selected_transaction = None
         self.setup_ui()
 
@@ -84,8 +84,8 @@ class HistoryPage(tk.Frame):
 
         # Fetch data from database for this user only
         rows = self.db.cursor.execute(
-            "SELECT id, type, category, amount, date FROM tx WHERE user_email=? ORDER BY date DESC",
-            (self.authenticated_user_email,)
+            "SELECT id, type, category, amount, date FROM tx WHERE user_id=? ORDER BY date DESC",
+            (self.authenticated_user_id,)
         ).fetchall()
 
         for i, row in enumerate(rows):
@@ -149,12 +149,12 @@ class HistoryPage(tk.Frame):
             w.destroy()
 
         # Recalculate stats from transactions to ensure accuracy
-        self.db.recalculate_user_stats(self.authenticated_user_email)
+        self.db.recalculate_user_stats(self.authenticated_user_id)
 
         # Calculate totals
         all_rows = self.db.cursor.execute(
-            "SELECT type, amount FROM tx WHERE user_email=?",
-            (self.authenticated_user_email,)
+            "SELECT type, amount FROM tx WHERE user_id=?",
+            (self.authenticated_user_id,)
         ).fetchall()
         
         total_income = sum(row[1] for row in all_rows if row[0] == "Income")
@@ -203,8 +203,8 @@ class HistoryPage(tk.Frame):
 
         # Fetch current transaction data
         row = self.db.cursor.execute(
-            "SELECT type, category, amount, date FROM tx WHERE id = ? AND user_email = ?",
-            (int(self.selected_transaction), self.authenticated_user_email)
+            "SELECT type, category, amount, date FROM tx WHERE id = ? AND user_id = ?",
+            (int(self.selected_transaction), self.authenticated_user_id)
         ).fetchone()
 
         if not row:
