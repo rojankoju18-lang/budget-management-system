@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import messagebox, font
 import home, income, expenses, report, settings
 import history
+import database
 import sqlite3
 import re
 import os
@@ -28,26 +29,26 @@ def init_db():
 
 
 def login_user(email, password):
-    """Authenticate user"""
+    """Authenticate user and return user_id"""
     if not all([email, password]):
-        return "All fields are required"
+        return ("ERROR", "All fields are required")
 
     try:
         conn = sqlite3.connect("signup/users.db")
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT * FROM users WHERE email = ? AND password = ?",
+            "SELECT id FROM users WHERE email = ? AND password = ?",
             (email, password)
         )
         user = cursor.fetchone()
         conn.close()
 
         if user:
-            return "SUCCESS"
+            return ("SUCCESS", user[0])  # Return (status, user_id)
         else:
-            return "Invalid email or password"
+            return ("ERROR", "Invalid email or password")
     except Exception as e:
-        return str(e) or "An error occurred"
+        return ("ERROR", str(e) or "An error occurred")
 
 
 def signup_user(fullname, phone, email, password, confirm):
@@ -84,7 +85,7 @@ class AuthWindow(tk.Tk):
         self.title("Budget Management System")
         self.geometry("900x500")
         self.resizable(False, False)
-        self.authenticated_user = None
+        self.authenticated_user_id = None
         self.login_image = None
         self.signup_image = None
         
@@ -130,12 +131,12 @@ class AuthWindow(tk.Tk):
         password_entry.pack(padx=30, pady=5)
 
         def handle_login():
-            result = login_user(email_entry.get(), password_entry.get())
-            if result == "SUCCESS":
-                self.authenticated_user = email_entry.get()
+            status, value = login_user(email_entry.get(), password_entry.get())
+            if status == "SUCCESS":
+                self.authenticated_user_id = value  # value is user_id
                 self.destroy()
             else:
-                messagebox.showerror("Login Failed", result)
+                messagebox.showerror("Login Failed", value)
 
         tk.Button(
             right_frame,
@@ -229,11 +230,11 @@ class AuthWindow(tk.Tk):
 
 
 class BudgetApp(tk.Tk):
-    def __init__(self, authenticated_user_email=None):
+    def __init__(self, authenticated_user_id=None):
         super().__init__()
         self.title("Budget Management System")
         self.geometry("1100x750")
-        self.authenticated_user_email = authenticated_user_email
+        self.authenticated_user_id = authenticated_user_id
 
         # colour palette copied from riwaj.py for consistency
         self.colors = {
@@ -350,8 +351,10 @@ class BudgetApp(tk.Tk):
             # Restart the authentication flow
             auth_window = AuthWindow()
             auth_window.mainloop()
-            if auth_window.authenticated_user:
-                app = BudgetApp(authenticated_user_email=auth_window.authenticated_user)
+            if auth_window.authenticated_user_id:
+                # Initialize user config in database
+                database.db.init_user_config(auth_window.authenticated_user_id)
+                app = BudgetApp(authenticated_user_id=auth_window.authenticated_user_id)
                 app.mainloop()
         except Exception:
             pass
@@ -362,6 +365,8 @@ if __name__ == "__main__":
     auth_window.mainloop()
     
     # Only proceed if user authenticated successfully
-    if auth_window.authenticated_user:
-        app = BudgetApp(authenticated_user_email=auth_window.authenticated_user)
+    if auth_window.authenticated_user_id:
+        # Initialize user config in database
+        database.db.init_user_config(auth_window.authenticated_user_id)
+        app = BudgetApp(authenticated_user_id=auth_window.authenticated_user_id)
         app.mainloop()

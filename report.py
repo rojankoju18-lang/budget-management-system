@@ -7,6 +7,7 @@ class ReportPage(tk.Frame):
         super().__init__(parent, bg="#F5F0F6", padx=30, pady=20)
         self.db = database.db
         self.controller = controller
+        self.authenticated_user_id = controller.authenticated_user_id if controller else None
         
         # Color palette matching main.py
         self.colors = {
@@ -40,12 +41,15 @@ class ReportPage(tk.Frame):
         for widget in self.stats_frame.winfo_children():
             widget.destroy()
         
-        # Get data from database
-        income = self.db.get_config('balance')
-        remaining = self.db.get_config('remaining_balance')
-        savings = self.db.get_config('savings')
-        day = int(self.db.get_config('day'))
-        categories = self.db.get_category_sums()
+        # Recalculate stats from transactions to ensure accuracy
+        self.db.recalculate_user_stats(self.authenticated_user_id)
+        
+        # Get data from database for this user
+        income = self.db.get_config(self.authenticated_user_id, 'balance')
+        remaining = self.db.get_config(self.authenticated_user_id, 'remaining_balance')
+        savings = self.db.get_config(self.authenticated_user_id, 'savings')
+        day = int(self.db.get_config(self.authenticated_user_id, 'day'))
+        categories = self.db.get_category_sums(self.authenticated_user_id)
         spent = sum(categories.values())
         
         # Create stat cards

@@ -1,8 +1,43 @@
 import tkinter as tk
+import sqlite3
+import os
 
 class HomePage(tk.Frame):
     def __init__(self, parent, controller=None):
         super().__init__(parent, bg="#F5F0F6")
         self.controller = controller
-        tk.Label(self, text="Welcome Home", font=("Arial", 24, "bold"), bg="#F5F0F6").pack(pady=50)
-        tk.Label(self, text="Select 'Report' to see the dashboard", font=("Arial", 12), bg="#F5F0F6").pack()
+        self.authenticated_user_id = controller.authenticated_user_id if controller else None
+        self.setup_ui()
+    
+    def setup_ui(self):
+        # Fetch user's full name and email from signup database
+        user_name = "User"
+        user_email = "user@example.com"
+        try:
+            if self.authenticated_user_id:
+                conn = sqlite3.connect("signup/users.db")
+                cursor = conn.cursor()
+                cursor.execute("SELECT fullname, email FROM users WHERE id = ?", (self.authenticated_user_id,))
+                result = cursor.fetchone()
+                if result:
+                    user_name = result[0]
+                    user_email = result[1]
+                conn.close()
+        except Exception:
+            pass
+        
+        # Welcome Frame
+        welcome_frame = tk.Frame(self, bg="#F5F0F6")
+        welcome_frame.pack(pady=80)
+        
+        tk.Label(welcome_frame, text=f"Welcome, {user_name}! 👋", font=("Arial", 32, "bold"), 
+                 bg="#F5F0F6", fg="#4A235A").pack(pady=20)
+        
+        tk.Label(welcome_frame, text=f"Email: {user_email}", font=("Arial", 12), 
+                 bg="#F5F0F6", fg="#666").pack(pady=5)
+        
+        tk.Label(welcome_frame, text="Your personal budget dashboard is ready", font=("Arial", 14), 
+                 bg="#F5F0F6", fg="#8E44AD").pack(pady=20)
+        
+        tk.Label(welcome_frame, text="📊 Select 'Report' to view your dashboard\n💰 Use 'Add Income' and 'Add Expenses' to track transactions\n📅 Check 'History' for all your records", 
+                 font=("Arial", 11), bg="#F5F0F6", fg="#666", justify=tk.LEFT).pack(pady=20)

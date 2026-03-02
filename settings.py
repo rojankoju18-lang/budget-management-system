@@ -9,14 +9,14 @@ class SettingsPage(tk.Frame):
         super().__init__(parent, bg="#F5F0F6")
         self.db_path = "signup/users.db"
         self.controller = controller
-        self.authenticated_email = controller.authenticated_user_email if controller else None
+        self.authenticated_user_id = controller.authenticated_user_id if controller else None
         self.user_data = None
         self.load_user_data()
         self.setup_ui()
 
     def load_user_data(self):
         """Load user data from signup/users.db"""
-        if not self.authenticated_email:
+        if not self.authenticated_user_id:
             messagebox.showerror("Error", "User not authenticated")
             return
         
@@ -24,8 +24,8 @@ class SettingsPage(tk.Frame):
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             cursor.execute(
-                "SELECT id, fullname, email, phone FROM users WHERE email = ?",
-                (self.authenticated_email,)
+                "SELECT id, fullname, email, phone FROM users WHERE id = ?",
+                (self.authenticated_user_id,)
             )
             self.user_data = cursor.fetchone()
             conn.close()
@@ -122,17 +122,12 @@ class SettingsPage(tk.Frame):
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             cursor.execute(
-                "UPDATE users SET fullname = ?, email = ?, phone = ? WHERE email = ?",
-                (fullname, email, phone, self.authenticated_email)
+                "UPDATE users SET fullname = ?, email = ?, phone = ? WHERE id = ?",
+                (fullname, email, phone, self.authenticated_user_id)
             )
             conn.commit()
             conn.close()
             
-            # Update authenticated email if it changed
-            if email != self.authenticated_email:
-                self.controller.authenticated_user_email = email
-                self.authenticated_email = email
-
             messagebox.showinfo("Success", "✓ Profile updated successfully")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to update profile: {str(e)}")
