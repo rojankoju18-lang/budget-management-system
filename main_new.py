@@ -220,7 +220,7 @@ class BudgetApp(tk.Tk):
             "pink_card": "#FADBD8",
             # category colours may be used by pages
             "rent": "#5D6D7E", "food": "#F4D03F", "savings": "#C0392B",
-            "groceries": "#8E44AD", "study": "#EB70AA", "bike": "#2ECC71"
+            "groceries": "#8E44AD", "study": "#EB70AA", "others": "#2ECC71"
         }
 
         self.configure(bg=self.colors["bg"])
