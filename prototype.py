@@ -21,7 +21,7 @@ class BudgetApp:
             "table_row_even": "#FDEBD0",
             # Category Colors
             "rent": "#5D6D7E", "food": "#F4D03F", "savings": "#C0392B",
-            "groceries": "#8E44AD", "study": "#EB70AA", "bike": "#2ECC71",
+            "groceries": "#8E44AD", "study": "#EB70AA", "others": "#2ECC71",
             "salary": "#27AE60"
         }
 
@@ -33,7 +33,7 @@ class BudgetApp:
     def get_totals(self):
         """Calculates income and expense breakdowns from the transaction list."""
         income = sum(float(t['amount'].replace(',', '')) for t in self.transactions if t['type'] == 'Income')
-        expenses = { "Rent": 0, "Food": 0, "Savings": 0, "Groceries": 0, "Study": 0, "Bike": 0 }
+        expenses = { "Rent": 0, "Food": 0, "Savings": 0, "Groceries": 0, "Study": 0, "others": 0 }
         
         for t in self.transactions:
             if t['type'] == 'Expense' and t['category'] in expenses:

@@ -17,7 +17,7 @@ class ReportPage(tk.Frame):
             "savings": "#C0392B",
             "groceries": "#8E44AD",
             "study": "#EB70AA",
-            "bike": "#2ECC71",
+            "others": "#2ECC71",
         }
         
         # Stats cards area
@@ -96,7 +96,7 @@ class ReportPage(tk.Frame):
             widget.destroy()
         
         # All possible categories in fixed order
-        all_categories = ["Rent", "Food", "Savings", "Groceries", "Study", "Bike"]
+        all_categories = ["Rent", "Food", "Savings", "Groceries", "Study", "others"]
         
         for cat in all_categories:
             color = self.colors.get(cat.lower(), "#DDD")

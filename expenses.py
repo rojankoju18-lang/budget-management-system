@@ -38,10 +38,10 @@ class ExpensesPage(tk.Frame):
         # Category Selection with color codes
         tk.Label(form, text="Category", font=("Arial", 12, "bold"), bg="white", fg="#4A235A").pack(anchor="w", pady=(0, 10))
         
-        self.categories = ["Rent", "Food", "Savings", "Groceries", "Study", "Bike"]
+        self.categories = ["Rent", "Food", "Savings", "Groceries", "Study", "others"]
         self.category_colors = {
             "Rent": "#5D6D7E", "Food": "#F4D03F", "Savings": "#C0392B",
-            "Groceries": "#8E44AD", "Study": "#EB70AA", "Bike": "#2ECC71"
+            "Groceries": "#8E44AD", "Study": "#EB70AA", "others": "#2ECC71"
         }
         
         self.selected_category = tk.StringVar(value=self.categories[0])

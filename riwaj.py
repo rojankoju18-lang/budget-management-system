@@ -17,14 +17,14 @@ class BudgetApp:
             "green_card": "#D5F5E3",
             "pink_card": "#FADBD8",
             "rent": "#5D6D7E", "food": "#F4D03F", "savings": "#C0392B",
-            "groceries": "#8E44AD", "study": "#EB70AA", "bike": "#2ECC71"
+            "groceries": "#8E44AD", "study": "#EB70AA", "others": "#2ECC71"
         }
 
         # Shared Data State - Defaulted to 0
         self.total_income = 0
         self.expenses = {
             "Rent": 0, "Food": 0, "Savings": 0,
-            "Groceries": 0, "Study": 0, "Bike": 0
+            "Groceries": 0, "Study": 0, "others": 0
         }
 
         self.setup_ui()
